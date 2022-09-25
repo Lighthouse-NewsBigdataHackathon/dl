@@ -40,7 +40,7 @@ from tqdm import tqdm, trange
 import skimage.io as io
 import PIL.Image
 import requests,json
-
+import torchvision
 
 N = type(None)
 V = np.array
@@ -295,8 +295,11 @@ def get_model(model_path, is_gpu=True):
 
 def get_img(url):
     base_url = "https://www.bigkinds.or.kr/resources/images"
+    # print(base_url+url)
     image = io.imread(base_url+url)
     pil_image = PIL.Image.fromarray(image) 
+    # totensor = torchvision.transforms.ToTensor()
+
     return pil_image
     # pil_img = Image(filename=UPLOADED_FILE)
     # display(pil_image)

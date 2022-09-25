@@ -3,8 +3,9 @@ import json
 
 
 import torch
+import torchvision
 import numpy as np
-import Bertsum, image_captioning, Retrieval
+import Bertsum, image_captioning# ,  Retrieval
 
 
 class NewsSumModule:
@@ -42,7 +43,7 @@ class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수
     def __init__(self, path, device="cpu"):
         self.device = device
         self.path = path
-
+        self.totensor = torchvision.transforms.ToTensor()
     def load(self):
         return image_captioning.get_model(self.path, False)
 
@@ -56,25 +57,24 @@ class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수
         self.model, self.clip_model, self.preprocess, self.tokenizer = self.load()
         # 빅카인즈 url 붙여서 img추출해야함
         # self.hong = image_captioning.img_cap()
-        img_list = []
+        caption_list = []
         for url in urls:
             img = image_captioning.get_img(url)
-            img_list.append(img)
-
-        images = self.preprocess(img_list).unsqueeze(0).to(self.device)
-        with torch.no_grad():
-            # if type(model) is ClipCaptionE2E:
-            #     prefix_embed = model.forward_image(image)
-            # else:
-            prefix = self.clip_model.encode_image(images).to(self.device, dtype=torch.float32)
-            prefix_embed = self.model.clip_project(prefix).reshape(1, prefix_length, -1)
-        if use_beam_search:
-            generated_text_prefix = image_captioning.generate_beam(self.model, self.tokenizer, embed=prefix_embed)[0]
-        else:
-            generated_text_prefix = image_captioning.generate2(self.model, self.tokenizer, embed=prefix_embed)
-    
+            img = self.preprocess(img).unsqueeze(0).to(self.device)
+            # img = self.totensor(img)
+            with torch.no_grad():
+                # if type(model) is ClipCaptionE2E:
+                #     prefix_embed = model.forward_image(image)
+                # else:
+                prefix = self.clip_model.encode_image(img).to(self.device, dtype=torch.float32)
+                prefix_embed = self.model.clip_project(prefix).reshape(1, prefix_length, -1)
+            if use_beam_search:
+                generated_text_prefix = image_captioning.generate_beam(self.model, self.tokenizer, embed=prefix_embed)[0]
+            else:
+                generated_text_prefix = image_captioning.generate2(self.model, self.tokenizer, embed=prefix_embed)
+            caption_list.append(generated_text_prefix)
         self.remove()
-        return generated_text_prefix
+        return caption_list
 
 
 
@@ -181,6 +181,7 @@ if __name__=="__main__":
             ]
         }
     }
+    payload["access_key"]=key
     url = "http://tools.kinds.or.kr:8888/search/news"
     res = requests.post(url, data=json.dumps(payload))
     hong = res.json()
@@ -188,6 +189,6 @@ if __name__=="__main__":
     realimg = (hongimg[0]['images'])
     superimg = "https://www.bigkinds.or.kr/resources/images"+realimg #앞의 url을 붙여야 이미지 획득 가능
     urls = [realimg, realimg]
-    caption_module = ImgCapModule("/desktop/clipcap.pt", True)
+    caption_module = ImgCapModule("/desktop/clipcap.pt", "cpu")
     captions = caption_module.forward(urls)
     print(captions)
