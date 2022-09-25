@@ -4,3 +4,9 @@
 [2022-09-25 11:30:56,807 INFO] * number of parameters: 177854209
 [2022-09-25 11:31:30,953 INFO] Loading checkpoint from /desktop/model_step_100000.pt
 [2022-09-25 11:31:33,945 INFO] * number of parameters: 177854209
+[2022-09-25 11:33:10,948 INFO] Loading checkpoint from /desktop/model_step_100000.pt
+[2022-09-25 11:33:13,887 INFO] * number of parameters: 177854209
+[2022-09-25 12:30:43,461 INFO] Loading checkpoint from /desktop/model_step_100000.pt
+[2022-09-25 12:30:46,406 INFO] * number of parameters: 177854209
+[2022-09-25 12:31:05,854 INFO] Loading checkpoint from /desktop/model_step_100000.pt
+[2022-09-25 12:31:08,795 INFO] * number of parameters: 177854209

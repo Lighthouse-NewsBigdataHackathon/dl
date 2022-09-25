@@ -1,15 +1,20 @@
+import requests
+import json
+
+
 import torch
 import numpy as np
-import Bertsum, image_captioning, Retrieval
+import Bertsum# , image_captioning, Retrieval
 
 
 class NewsSumModule:
-    def init(self, path):
+    def __init__(self, path):
         self.path = path
         self.args = Bertsum.get_args()
 
     def load(self):
-        self.model = Bertsum.get_model()
+        self.model = Bertsum.get_model('0')
+        self.model.to("cuda")
         ckpt = torch.load(self.path, map_location=lambda storage, loc: storage)
         self.model.load_cp(ckpt)
         self.model.eval()
@@ -25,17 +30,11 @@ class NewsSumModule:
         self.load()
         trainer = Bertsum.build_trainer(self.args, 0, self.model, None)
         for s in src:
-            text = (s['return_object']['documents'])
-            jitext = (text[0]['content'])                 #json 내의 return_object안의 documents list 내부의
-            jitext = jitext.split(".")                        #content(기사)를 가져옴
-            realtext = ""
-            for i in range(0,len(jitext)):
-                realtext = realtext + jitext[i]+"."     
             processed_text = Bertsum.txt2input(realtext)
-            test_iter = Bertsum.make_loader(self.args, processed_text, "cuda")
+            test_iter = Bertsum.make_loader(self.args, processed_text, 0)
 
             out = trainer.summ(test_iter, 10000)
-            out = [list(filter(None, realtext.split('.')))[i] for i in out[0][:3]]
+            out = [list(filter(None, s.split('.')))[i] for i in out[0][:3]]
             result.append(out)
         self.remove()
         return result
@@ -68,6 +67,8 @@ class UpdateModule:
         return "ㅠㅁ해"
 
 if __name__=="__main__":
+    print(torch.cuda.device_count())
+    news_sum = NewsSumModule("/desktop/model_step_100000.pt")
     #API에서 가져온 text를 집어넣는 CODE
     f = open("/desktop/api_key")
     key = f.readline().replace("\n", "")
@@ -94,10 +95,7 @@ if __name__=="__main__":
     payload = {
         "access_key": "",          #api key 넣는곳
         "argument": {
-        "news_ids": [
-            "{0}".format(issue_news),     #issue_news 변수로 news_id가져오기
-            "{0}".format(b[0])
-        ],
+        "news_ids": b,     #issue_news 변수로 news_id가져오기
         "fields": [
             "content",
             "byline",
@@ -115,14 +113,20 @@ if __name__=="__main__":
     res = requests.post(url, data=json.dumps(payload))
     hong = res.json()
     hongtext = (hong['return_object']['documents'])
-    jitext = (hongtext[0]['content'])                 #json 내의 return_object안의 documents list 내부의
-    jitext = jitext.split(".")                        #content(기사)를 가져옴
-    realtext = ""
-    for i in range(0,len(jitext)):
-        realtext = realtext + jitext[i]+"."          #마침표를 기준으로 기사를 split하여 다시 마침표를 붙여 넣어줌
-    print(realtext)
+    print(f"total {len(hongtext)} articles")
+    input_list = []
+    for article in range(len(hongtext)):
+        jitext = (hongtext[article]['content'])                 #json 내의 return_object안의 documents list 내부의
+        jitext = jitext.split(".")                        #content(기사)를 가져옴
+        realtext = ""
+        for i in range(0,len(jitext)):
+            realtext = realtext + jitext[i]+"."          #마침표를 기준으로 기사를 split하여 다시 마침표를 붙여 넣어줌
+        input_list.append(realtext)
+        # print(realtext)
+    print(input_list)
+    result = news_sum.forward(input_list)
 
-    input_data = txt2input(realtext)
+    input_data = Bertsum.txt2input(realtext)
     sum_list = test(args, input_data, -1, '', None)
     sum_list[0]
 

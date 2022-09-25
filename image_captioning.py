@@ -1,14 +1,4 @@
-#@title Install
-!pip install transformers
-! pip install git+https://github.com/openai/CLIP.git
-
-#@title Drive Downloader
-
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-from google.colab import auth
-from oauth2client.client import GoogleCredentials
-
+"""
 download_with_pydrive = True #@param {type:"boolean"}  
 
 class Downloader(object):
@@ -30,11 +20,12 @@ class Downloader(object):
             downloaded.FetchMetadata(fetch_all=True)
             downloaded.GetContentFile(file_dst)
         else:
-            !gdown --id $file_id -O $file_dst
+            # !gdown --id $file_id -O $file_dst
+            print("++")
 
 downloader = Downloader(download_with_pydrive)
 
-#@title Imports
+"""
 
 import clip
 import os
@@ -46,10 +37,8 @@ import sys
 from typing import Tuple, List, Union, Optional
 from transformers import GPT2Tokenizer, GPT2LMHeadModel, AdamW, get_linear_schedule_with_warmup
 from tqdm import tqdm, trange
-from google.colab import files
 import skimage.io as io
 import PIL.Image
-from IPython.display import Image 
 import requests,json
 
 

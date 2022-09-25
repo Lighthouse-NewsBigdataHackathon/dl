@@ -433,8 +433,8 @@ def get_args():
     })
     return args
 
-def get_model():
-    device = "cpu" if args.visible_gpus == '-1' else "cuda"
+def get_model(gpu_id='-1'):
+    device = "cpu" if gpu_id == '-1' else "cuda"
     device_id = 0 if device == "cuda" else -1
     args = easydict.EasyDict({
     "encoder":'classifier',
@@ -468,7 +468,7 @@ def get_model():
     "test_from":'/desktop/model_step_100000.pt'
     })  
     config = BertConfig.from_pretrained('bert-base-multilingual-cased')
-    return Summarizer(args, device, load_pretrained_bert=False, bert_config = config)
+    return Summarizer(args, device, load_pretrained_bert=False, bert_config = config)# .to(device)
 
 args.gpu_ranks = [int(i) for i in args.gpu_ranks.split(',')]
 os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
@@ -489,6 +489,7 @@ def txt2input(text):
 
 
 if __name__=="__main__":
+  print(torch.cuda.device_count())
   #API에서 가져온 text를 집어넣는 CODE
   f = open("/desktop/api_key")
   key = f.readline().replace("\n", "")
