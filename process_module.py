@@ -67,3 +67,65 @@ class UpdateModule:
         #기사요약
         return "ㅠㅁ해"
 
+if __name__=="__main__":
+    #API에서 가져온 text를 집어넣는 CODE
+    f = open("/desktop/api_key")
+    key = f.readline().replace("\n", "")
+    #issue_ranking code : news code 추출용 
+    payload_issue = {"access_key":"",   # api key 넣는곳 
+        "argument": {
+            "date": "2022-09-13",
+            "provider": ["국민일보"
+            ]
+        }
+    }
+    payload_issue["access_key"]=key
+    # print(payload_issue)
+    url_issue = "http://tools.kinds.or.kr:8888/issue_ranking"
+    res_issue = requests.post(url_issue,data=json.dumps(payload_issue))
+    # print(res_issue.content)
+    # hong_issue= res_issue.json()   #json파일로 받은 data
+    hong_issue = json.loads(res_issue.content, encoding='utf-8', strict=False)
+    hongimg = hong_issue['return_object']['topics']   
+    b = hongimg[0]['news_cluster']                    #b는 return_object의 topics의 list내의 news_cluster list
+    issue_news = b[4]                                 #issue_news라는 변수내에 b[4]를 넣고 test
+                                                    #어떤 방식으로 쓰일지 몰라 우선은 가시적으로 확인하기 위해 정수를 넣어 코드작성함
+    #news_code로 기사 가져오기
+    payload = {
+        "access_key": "",          #api key 넣는곳
+        "argument": {
+        "news_ids": [
+            "{0}".format(issue_news),     #issue_news 변수로 news_id가져오기
+            "{0}".format(b[0])
+        ],
+        "fields": [
+            "content",
+            "byline",
+            "category",
+            "category_incident",
+            "images",
+            "provider_subject",
+            "provider_news_id",
+            "publisher_code"
+        ]
+        }
+    }
+    payload["access_key"] = key
+    url = "http://tools.kinds.or.kr:8888/search/news"
+    res = requests.post(url, data=json.dumps(payload))
+    hong = res.json()
+    hongtext = (hong['return_object']['documents'])
+    jitext = (hongtext[0]['content'])                 #json 내의 return_object안의 documents list 내부의
+    jitext = jitext.split(".")                        #content(기사)를 가져옴
+    realtext = ""
+    for i in range(0,len(jitext)):
+        realtext = realtext + jitext[i]+"."          #마침표를 기준으로 기사를 split하여 다시 마침표를 붙여 넣어줌
+    print(realtext)
+
+    input_data = txt2input(realtext)
+    sum_list = test(args, input_data, -1, '', None)
+    sum_list[0]
+
+    #Result
+    out = [list(filter(None, realtext.split('.')))[i] for i in sum_list[0][0][:3]]
+    print(out)
