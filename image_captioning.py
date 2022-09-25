@@ -332,26 +332,24 @@ realimg = (hongimg[0]['images'])
 superimg = "https://www.bigkinds.or.kr/resources/images"+realimg #앞의 url을 붙여야 이미지 획득 가능
 
 
-#@title Inference
-use_beam_search = False #@param {type:"boolean"}  
+# #@title Inference
+use_beam_search = False #@param {type:"boolean"}
 
-image = io.imread(superimg)
-pil_image = PIL.Image.fromarray(image)
-#pil_img = Image(filename=UPLOADED_FILE)
-display(pil_image)
+def img_cap():
+    image = io.imread(superimg)
+    pil_image = PIL.Image.fromarray(image) 
+    #pil_img = Image(filename=UPLOADED_FILE)
+    display(pil_image)
 
-image = preprocess(pil_image).unsqueeze(0).to(device)
-with torch.no_grad():
-    # if type(model) is ClipCaptionE2E:
-    #     prefix_embed = model.forward_image(image)
-    # else:
-    prefix = clip_model.encode_image(image).to(device, dtype=torch.float32)
-    prefix_embed = model.clip_project(prefix).reshape(1, prefix_length, -1)
-if use_beam_search:
-    generated_text_prefix = generate_beam(model, tokenizer, embed=prefix_embed)[0]
-else:
-    generated_text_prefix = generate2(model, tokenizer, embed=prefix_embed)
-
-
-print('\n')
-print(generated_text_prefix)
+    image = preprocess(pil_image).unsqueeze(0).to(device)
+    with torch.no_grad():
+        # if type(model) is ClipCaptionE2E:
+        #     prefix_embed = model.forward_image(image)
+        # else:
+        prefix = clip_model.encode_image(image).to(device, dtype=torch.float32)
+        prefix_embed = model.clip_project(prefix).reshape(1, prefix_length, -1)
+    if use_beam_search:
+        generated_text_prefix = generate_beam(model, tokenizer, embed=prefix_embed)[0]
+    else:
+        generated_text_prefix = generate2(model, tokenizer, embed=prefix_embed)
+    return generated_text_prefix
