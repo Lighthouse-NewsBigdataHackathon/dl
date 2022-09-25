@@ -1,8 +1,10 @@
-import Bertsum_test, image_captioning
+import Bertsum_test, image_captioning, Retrieval
 
+class RetrievalModule:
+    def __init__():
 
 class NewsSumModule:
-    def init(self):
+    def __init__(self):
         self.path = "경로" #weight(checkpoint)의 경로
     def load(self):
         self.model = Bertsum_test.get_model()
@@ -18,7 +20,7 @@ class NewsSumModule:
         return #list 3줄요약 해주는 code
 
 class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수행.
-    def load(self,src):
+    def load(self):
         self.model =  "retrieval에서 이미지 받아오기."
     def remove(self):
         del model
@@ -33,9 +35,9 @@ class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수
 
 class UpdateModule:
 
-    def init(self):
-        self.news_sum = News_sumModule()
-        self.imgcap = imgcapModule()
+    def __init__(self):
+        self.news_sum = NewsSumModule()
+        self.imgcap = ImgCapModule()
         self.retrieval = RetrievalModule()
 
     def update(self):
