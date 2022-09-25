@@ -13,8 +13,7 @@ class NewsSumModule:
         self.args = Bertsum.get_args()
 
     def load(self):
-        self.model = Bertsum.get_model('0')
-        self.model.to("cuda")
+        self.model = Bertsum.get_model('-1')
         ckpt = torch.load(self.path, map_location=lambda storage, loc: storage)
         self.model.load_cp(ckpt)
         self.model.eval()
@@ -24,14 +23,14 @@ class NewsSumModule:
 
     def forward(self, src):
         """
-        scr: list of inputs
+        scr: realtext를 list에 담아서 넣는다.
         """
         result = []
         self.load()
         trainer = Bertsum.build_trainer(self.args, 0, self.model, None)
         for s in src:
             processed_text = Bertsum.txt2input(realtext)
-            test_iter = Bertsum.make_loader(self.args, processed_text, 0)
+            test_iter = Bertsum.make_loader(self.args, processed_text, 'cpu')
 
             out = trainer.summ(test_iter, 10000)
             out = [list(filter(None, s.split('.')))[i] for i in out[0][:3]]
@@ -125,7 +124,8 @@ if __name__=="__main__":
         # print(realtext)
     print(input_list)
     result = news_sum.forward(input_list)
-
+    print(result)
+    """
     input_data = Bertsum.txt2input(realtext)
     sum_list = test(args, input_data, -1, '', None)
     sum_list[0]
@@ -133,3 +133,4 @@ if __name__=="__main__":
     #Result
     out = [list(filter(None, realtext.split('.')))[i] for i in sum_list[0][0][:3]]
     print(out)
+    """
