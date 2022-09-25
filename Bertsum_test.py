@@ -410,6 +410,9 @@ def test(args, input_list, device_id, pt, step):
         setattr(args, k, opt[k])
 
   config = BertConfig.from_pretrained('bert-base-multilingual-cased')
+
+
+
   model = Summarizer(args, device, load_pretrained_bert=False, bert_config = config)
   model.load_cp(checkpoint)
   model.eval()
@@ -420,6 +423,10 @@ def test(args, input_list, device_id, pt, step):
   trainer = build_trainer(args, device_id, model, None)
   result = trainer.summ(test_iter,step)
   return result, input_list
+
+def get_model():
+
+    return Summarizer
 
 args.gpu_ranks = [int(i) for i in args.gpu_ranks.split(',')]
 os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
