@@ -262,83 +262,42 @@ def generate2(
 
 pretrained_model = 'Conceptual captions'  # @param ['COCO', 'Conceptual captions']
 
-if pretrained_model == 'Conceptual captions':
-  downloader.download_file("14pXWwB4Zm82rsDdvbGguLfx9F8aM7ovT", model_path)
-else:
-  downloader.download_file("1IdaBtMSvtyzF0ByVaBHtvM0JYSXRExRX", model_path)
+# if pretrained_model == 'Conceptual captions':
+#   downloader.download_file("14pXWwB4Zm82rsDdvbGguLfx9F8aM7ovT", model_path)
+# else:
+#   downloader.download_file("1IdaBtMSvtyzF0ByVaBHtvM0JYSXRExRX", model_path)
 
-#@title GPU/CPU
+def get_model(model_path, is_gpu=True):
+    #@title GPU/CPU
+    is_gpu = is_gpu #@param {type:"boolean"}  
+    #@title CLIP model + GPT2 tokenizer
 
+    device = CUDA(0) if is_gpu else "cpu"
+    clip_model, preprocess = clip.load("ViT-B/32", device=device, jit=False)
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
-is_gpu = True #@param {type:"boolean"}  
-
-
-#@title CLIP model + GPT2 tokenizer
-
-device = CUDA(0) if is_gpu else "cpu"
-clip_model, preprocess = clip.load("ViT-B/32", device=device, jit=False)
-tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-
-#@title Load model weights
+    #@title Load model weights
 
 
-prefix_length = 10
+    prefix_length = 10
 
-model = ClipCaptionModel(prefix_length)
+    model = ClipCaptionModel(prefix_length)
 
-model.load_state_dict(torch.load(model_path, map_location=CPU)) 
+    model.load_state_dict(torch.load(model_path, map_location=CPU)) 
 
-model = model.eval() 
-device = CUDA(0) if is_gpu else "cpu"
-model = model.to(device)
+    model = model.eval() 
+    device = CUDA(0) if is_gpu else "cpu"
+    model = model.to(device)
+    return model, clip_model, preprocess, tokenizer
 
 
 #@title Upload Image
 
-payload = {
-    "access_key": " ",   #api key 넣는곳
-    "argument": {
-        "news_ids": [
-            "02100601.20211027093629001"
-        ],
-        "fields": [
-            "content",
-            "byline",
-            "category",
-            "category_incident",
-            "images",
-            "provider_subject",
-            "provider_news_id",
-            "publisher_code"
-        ]
-    }
-}
-url = "http://tools.kinds.or.kr:8888/search/news"
-res = requests.post(url, data=json.dumps(payload))
-hong = res.json()
-hongimg = (hong['return_object']['documents'])                   #json형식의 return_object의 document list의 images를 가져오는 code
-realimg = (hongimg[0]['images'])
-superimg = "https://www.bigkinds.or.kr/resources/images"+realimg #앞의 url을 붙여야 이미지 획득 가능
-
-
-# #@title Inference
-use_beam_search = False #@param {type:"boolean"}
-
-def img_cap():
-    image = io.imread(superimg)
+def get_img(url):
+    base_url = "https://www.bigkinds.or.kr/resources/images"
+    image = io.imread(base_url+url)
     pil_image = PIL.Image.fromarray(image) 
-    #pil_img = Image(filename=UPLOADED_FILE)
-    display(pil_image)
+    return pil_image
+    # pil_img = Image(filename=UPLOADED_FILE)
+    # display(pil_image)
 
-    image = preprocess(pil_image).unsqueeze(0).to(device)
-    with torch.no_grad():
-        # if type(model) is ClipCaptionE2E:
-        #     prefix_embed = model.forward_image(image)
-        # else:
-        prefix = clip_model.encode_image(image).to(device, dtype=torch.float32)
-        prefix_embed = model.clip_project(prefix).reshape(1, prefix_length, -1)
-    if use_beam_search:
-        generated_text_prefix = generate_beam(model, tokenizer, embed=prefix_embed)[0]
-    else:
-        generated_text_prefix = generate2(model, tokenizer, embed=prefix_embed)
-    return generated_text_prefix

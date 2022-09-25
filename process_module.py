@@ -4,7 +4,7 @@ import json
 
 import torch
 import numpy as np
-import Bertsum# , image_captioning, Retrieval
+import Bertsum, image_captioning, Retrieval
 
 
 class NewsSumModule:
@@ -39,17 +39,42 @@ class NewsSumModule:
         return result
     
 class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수행.
-    def load(self):
-        self.model =  "retrieval에서 이미지 받아오기."
-    def remove(self):
-        del model
-    def forward(self):
-        self.load()
-        #빅카인즈 url 붙여서 img추출해야함
+    def __init__(self, path, device="cpu"):
+        self.device = device
+        self.path = path
 
-        self.hong = image_captioning.img_cap()
+    def load(self):
+        return image_captioning.get_model(self.path, False)
+
+    def remove(self):
+        del self.model, self.clip_model, self.preprocess, self.tokenizer
+
+    def forward(self, urls):
+        use_beam_search = False #@param {type:"boolean"}
+        prefix_length = 10
+        
+        self.model, self.clip_model, self.preprocess, self.tokenizer = self.load()
+        # 빅카인즈 url 붙여서 img추출해야함
+        # self.hong = image_captioning.img_cap()
+        img_list = []
+        for url in urls:
+            img = image_captioning.get_img(url)
+            img_list.append(img)
+
+        images = self.preprocess(img_list).unsqueeze(0).to(self.device)
+        with torch.no_grad():
+            # if type(model) is ClipCaptionE2E:
+            #     prefix_embed = model.forward_image(image)
+            # else:
+            prefix = self.clip_model.encode_image(images).to(self.device, dtype=torch.float32)
+            prefix_embed = self.model.clip_project(prefix).reshape(1, prefix_length, -1)
+        if use_beam_search:
+            generated_text_prefix = image_captioning.generate_beam(self.model, self.tokenizer, embed=prefix_embed)[0]
+        else:
+            generated_text_prefix = image_captioning.generate2(self.model, self.tokenizer, embed=prefix_embed)
+    
         self.remove()
-        return self.hong
+        return generated_text_prefix
 
 
 
@@ -134,3 +159,35 @@ if __name__=="__main__":
     out = [list(filter(None, realtext.split('.')))[i] for i in sum_list[0][0][:3]]
     print(out)
     """
+
+
+    # image captioning test
+
+    payload = {
+        "access_key": " ",   #api key 넣는곳
+        "argument": {
+            "news_ids": [
+                "02100601.20211027093629001"
+            ],
+            "fields": [
+                "content",
+                "byline",
+                "category",
+                "category_incident",
+                "images",
+                "provider_subject",
+                "provider_news_id",
+                "publisher_code"
+            ]
+        }
+    }
+    url = "http://tools.kinds.or.kr:8888/search/news"
+    res = requests.post(url, data=json.dumps(payload))
+    hong = res.json()
+    hongimg = (hong['return_object']['documents'])                   #json형식의 return_object의 document list의 images를 가져오는 code
+    realimg = (hongimg[0]['images'])
+    superimg = "https://www.bigkinds.or.kr/resources/images"+realimg #앞의 url을 붙여야 이미지 획득 가능
+    urls = [realimg, realimg]
+    caption_module = ImgCapModule("/desktop/clipcap.pt", True)
+    captions = caption_module.forward(urls)
+    print(captions)
