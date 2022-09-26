@@ -107,19 +107,17 @@ for i in range(len(hong_popularnews)):
     text_popularnews.append(hong_popularnews[0]['news_id'])
 
 
-#newscluster_issue list안에는 issue_ranking에서 뽑은 news_id들이,
-#text_popularnews list안에는 query_rank to news검색 api에서 뽑은 news_id들이 들어가 있습니다.
+#newscluster_issue list안에는 issue_ranking(4)에서 뽑은 news_id들이,
+#text_popularnews list안에는 query_rank(7) to news검색 api(2)에서 뽑은 news_id들이 들어가 있습니다.
 
 
-
+text_sum = newscluster_issue+text_popularnews
 
 #news_cluster(code)로 기사뽑기 - 3. 뉴스 상세 정보조회 api
 payload_issuenews = {
     "access_key": "",   #api key 넣는곳
     "argument": {
-        "news_ids": [
-            "{0}".format(newscluster_issue)
-        ],
+        "news_ids": text_sum,
         "fields": [
             "content",
             "byline",
@@ -136,4 +134,7 @@ payload_issuenews = {
 issuenews_res = requests.post(url, data=json.dumps(payload_issuenews))
 issuenews = issuenews_res.json()
 hong_issuenews = (issuenews['return_object']['documents'])
-text_issuenews = (hong_issuenews[0]['content'])
+text_issuenews=[]
+for i in range(len(hong_issuenews)):
+    text_issuenews.append(hong_issuenews[i]['content'])
+print(text_issuenews)
