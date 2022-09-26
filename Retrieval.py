@@ -1,10 +1,11 @@
 import requests,json
 issue_url = "http://tools.kinds.or.kr:8888/issue_ranking"#issue_ranking url
 popular_url = "http://tools.kinds.or.kr:8888/query_rank"#query_rank url
+url = "http://tools.kinds.or.kr:8888/search/news"
 
 
 # 4. issue_ranking api사용
-payload_issue = {"access_key":"8522d0d3-0816-4a14-9322-89a09d0ebb84", #api key 넣는곳
+payload_issue = {"access_key":"", #api key 넣는곳
        "argument": {
            "date": "2022-09-06",
             "provider": ["국민일보" #언론사는 or로 추가지정가능
@@ -19,33 +20,6 @@ newscluster_issue = []
 for i in range(len(hong_issue)):
     for k in range(len(hong_issue[i]['news_cluster'])):
         newscluster_issue.append(hong_issue[i]['news_cluster'][k])   #newscluster_issuelist 안에 newscode들 저장되어있음
-
-#news_cluster(code)로 기사뽑기 - 3. 뉴스 상세 정보조회 api
-payload_issuenews = {
-    "access_key": "",   #api key 넣는곳
-    "argument": {
-        "news_ids": [
-            "{0}".format(newscluster_issue)
-        ],
-        "fields": [
-            "content",
-            "byline",
-            "category",
-            "category_incident",
-            "images",
-            "provider_subject",
-            "provider_news_id",
-            "publisher_code"
-        ]
-    }
-}
-url = "http://tools.kinds.or.kr:8888/search/news"
-issuenews_res = requests.post(url, data=json.dumps(payload_issuenews))
-issuenews = issuenews_res.json()
-hong_issuenews = (issuenews['return_object']['documents'])
-text_issuenews = (hong_issuenews[0]['content'])
-
-
 
 # 7. query_rank api사용
 
@@ -69,7 +43,6 @@ for i in range(len(hong_popular)-1):
     querylist+=hong_popular[i]['query']
     querylist+=" OR "
 querylist+=hong_popular[-1]['query']
-
 
 
 #query로 text뽑기 - 2.뉴스검색 api (3의 상세뉴스조회와 같은출력값)
@@ -116,7 +89,7 @@ payload_popularnews = {
         "sort": {"date": "desc"},
         "hilight": 200,
         "return_from": 0,
-        "return_size": 5
+        "return_size": 5,
         "fields": [
             "byline",
             "category",
@@ -128,6 +101,39 @@ payload_popularnews = {
 
 popularnews_res = requests.post(url, data=json.dumps(payload_popularnews))
 popularnews = popularnews_res.json()
-hong_popularnews = (popularnews['return_object']['documents']
-text_popularnews = (hong_popularnews[0]['content'])
+hong_popularnews = (popularnews['return_object']['documents'])
+text_popularnews = []
+for i in range(len(hong_popularnews)):
+    text_popularnews.append(hong_popularnews[0]['news_id'])
 
+
+#newscluster_issue list안에는 issue_ranking에서 뽑은 news_id들이,
+#text_popularnews list안에는 query_rank to news검색 api에서 뽑은 news_id들이 들어가 있습니다.
+
+
+
+
+#news_cluster(code)로 기사뽑기 - 3. 뉴스 상세 정보조회 api
+payload_issuenews = {
+    "access_key": "",   #api key 넣는곳
+    "argument": {
+        "news_ids": [
+            "{0}".format(newscluster_issue)
+        ],
+        "fields": [
+            "content",
+            "byline",
+            "category",
+            "category_incident",
+            "images",
+            "provider_subject",
+            "provider_news_id",
+            "publisher_code"
+        ]
+    }
+}
+
+issuenews_res = requests.post(url, data=json.dumps(payload_issuenews))
+issuenews = issuenews_res.json()
+hong_issuenews = (issuenews['return_object']['documents'])
+text_issuenews = (hong_issuenews[0]['content'])
