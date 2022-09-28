@@ -5,7 +5,40 @@ import json
 import torch
 import torchvision
 import numpy as np
-import Bertsum, image_captioning# ,  Retrieval
+import Bertsum, image_captioning, Retrieval
+
+#날짜, 시간, api key
+class RetrievalModule:
+
+    def __init__(self):
+        self.date = input()
+        self.time = input()
+        f = open("/desktop/api_key")
+        key = f.readline().replace("\n", "")
+        self.api_key = key
+        self.sum =[]
+    '''
+    이미지, 기사 가져오기
+    json안에 date, time, api key 어떻게 넣지?
+    1. api key 4번 사용 모두 함수로 만들어 넣어준다.
+       기사, 이미지는 어떻게?
+    '''
+    def load(self):
+        self.issue = Retrieval.issue_ranking(self.date,self.api_key)
+        self.query = Retrieval.query_ranking(self.date,self.api_key)
+
+    def remove(self):
+        self.sum.clear()
+
+    def forward(self):
+        self.load()
+        self.sum = self.issue + self.query
+        news = Retrieval.news_info(self.api_key,self.sum)
+        self.remove()
+        return news
+        #이중 리스트 형태. 리스트 안에 기사와 이미지가 각각 리스트 형태로 존재.
+
+        
 
 
 class NewsSumModule:
@@ -82,13 +115,11 @@ class UpdateModule:
 
     def init(self):
         self.news_sum = NewsSumModule()
-        self.imgcap = imgcapModule()
+        self.imgcap = ImgCapModule()
         self.retrieval = RetrievalModule()
 
-    def update(self):
-        
-        #기사요약
-        return "ㅠㅁ해"
+    # def update(self):
+
 
 if __name__=="__main__":
     print(torch.cuda.device_count())
