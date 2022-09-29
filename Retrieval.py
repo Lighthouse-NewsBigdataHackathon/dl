@@ -9,7 +9,7 @@ def issue_ranking(date,api_key):
     payload_issue = {"access_key":api_key, #api key 넣는곳
         "argument": {
             "date": date,
-                "provider": ["국민일보" #언론사는 or로 추가지정가능
+                "provider": [#"국민일보"
                 ]
             }
         }
@@ -24,13 +24,13 @@ def issue_ranking(date,api_key):
     return newscluster_issue
 
 # 7. query_rank api사용
-def query_ranking(date,api_key):
+def query_ranking(date1,date2,api_key,offset):
     payload_popular = {
     "access_key": api_key,   #api key 넣는곳
         "argument": {
-            "from": date,
-            "until": date,
-            "offset": 5,
+            "from": date1,
+            "until": date2,
+            "offset": offset,
             "target_access_key": ""
         }
     }
@@ -51,24 +51,24 @@ def query_ranking(date,api_key):
         "argument": {
             "query": "{0}".format(querylist),
             "published_at": {
-                "from": date,
-                "until": date
+                "from": date1,
+                "until": date2
             },
             "provider": [
-                "경향신문",
+                # "경향신문",
             ],
             "category": [
-                "정치>정치일반",
-                "IT_과학"
+                # "정치>정치일반",
+                # "IT_과학"
             ],
             "category_incident": [
-                "범죄",
-                "교통사고",
-                "재해>자연재해"
+                # "범죄",
+                # "교통사고",
+                # "재해>자연재해"
             ],
             "byline": "",
             "provider_subject": [
-                "경제","부동산"
+                # "경제","부동산"
             ],
             "subject_info": [
                 ""
@@ -132,10 +132,13 @@ def news_info(api_key,news_id):
     issuenews_res = requests.post(url, data=json.dumps(payload_issuenews))
     issuenews = issuenews_res.json()
     hong_documents = (issuenews['return_object']['documents'])
+    meta_container=[]
     text_issuenews=[]
     image_issuenews=[]
+    keys = ['news_id','content','published_at', 'provider', 'images','category']
     for i in range(len(hong_documents)):
-        text_issuenews.append(hong_documents[i]['content'])
-    for i in range(len(hong_documents)):
-        image_issuenews.append(hong_documents[i]['images'])
-    return [text_issuenews, image_issuenews]
+        meta_dict = {}
+        for k in range(len(keys)):
+            meta_dict[keys[k]] = (hong_documents[i][keys[k]])
+        meta_container.append(meta_dict)
+    return meta_container

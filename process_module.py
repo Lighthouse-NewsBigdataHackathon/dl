@@ -11,7 +11,6 @@ import Bertsum, image_captioning, Retrieval
 class RetrievalModule:
 
     def __init__(self):
-        self.date = input()
         self.time = input()
         f = open("/desktop/api_key")
         key = f.readline().replace("\n", "")
@@ -23,9 +22,9 @@ class RetrievalModule:
     1. api key 4번 사용 모두 함수로 만들어 넣어준다.
        기사, 이미지는 어떻게?
     '''
-    def load(self):
-        self.issue = Retrieval.issue_ranking(self.date,self.api_key)
-        self.query = Retrieval.query_ranking(self.date,self.api_key)
+    def load(self,date):
+        self.issue = Retrieval.issue_ranking(date,self.api_key)
+        self.query = Retrieval.query_ranking(date,self.api_key)
 
     def remove(self):
         self.sum.clear()
