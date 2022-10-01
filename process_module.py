@@ -1,6 +1,6 @@
 import requests
 import json
-
+import time
 
 import torch
 import torchvision
@@ -9,28 +9,23 @@ import Bertsum, image_captioning, Retrieval
 
 #날짜, 시간, api key
 class RetrievalModule:
-
     def __init__(self):
         self.time = input()
         f = open("/desktop/api_key")
         key = f.readline().replace("\n", "")
         self.api_key = key
         self.sum =[]
-    '''
-    이미지, 기사 가져오기
-    json안에 date, time, api key 어떻게 넣지?
-    1. api key 4번 사용 모두 함수로 만들어 넣어준다.
-       기사, 이미지는 어떻게?
-    '''
-    def load(self,date):
-        self.issue = Retrieval.issue_ranking(date,self.api_key)
-        self.query = Retrieval.query_ranking(date,self.api_key)
+        print("Retrieval Module initialized")
+        
+    def load(self, date, date2):
+        self.issue = Retrieval.issue_ranking(date, self.api_key)
+        self.query = Retrieval.query_ranking(date, date2, self.api_key)
 
     def remove(self):
         self.sum.clear()
 
-    def forward(self):
-        self.load()
+    def forward(self, date, date2):
+        self.load(date, date2)
         self.sum = self.issue + self.query
         news = Retrieval.news_info(self.api_key,self.sum)
         self.remove()
@@ -44,6 +39,7 @@ class NewsSumModule:
     def __init__(self, path):
         self.path = path
         self.args = Bertsum.get_args()
+        print("News Summarization Module initialized")
 
     def load(self):
         self.model = Bertsum.get_model('-1')
@@ -76,6 +72,8 @@ class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수
         self.device = device
         self.path = path
         self.totensor = torchvision.transforms.ToTensor()
+        print("Image Caption Module initialized")
+
     def load(self):
         return image_captioning.get_model(self.path, False)
 
@@ -111,16 +109,30 @@ class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수
 
 
 class UpdateModule:
-
-    def init(self):
+    def __init__(self):
         self.news_sum = NewsSumModule()
         self.imgcap = ImgCapModule()
         self.retrieval = RetrievalModule()
+    
+    def update_db(self):
+        return
 
-    # def update(self):
+    def today(self):
+        # interval in seconds
+        retrieved = self.retrieval.forward('2022-09-30', '2022-10-01')
+        # self.news_sum.forward()
+
+        # self.imgcap.forward()
+        return 
+        
+
 
 
 if __name__=="__main__":
+    print("Test Run")
+    dl_server = UpdateModule()
+    dl_server.today()
+    """
     print(torch.cuda.device_count())
     news_sum = NewsSumModule("/desktop/model_step_100000.pt")
     #API에서 가져온 text를 집어넣는 CODE
@@ -180,7 +192,7 @@ if __name__=="__main__":
     print(input_list)
     result = news_sum.forward(input_list)
     print(result)
-    """
+    
     input_data = Bertsum.txt2input(realtext)
     sum_list = test(args, input_data, -1, '', None)
     sum_list[0]
@@ -188,7 +200,7 @@ if __name__=="__main__":
     #Result
     out = [list(filter(None, realtext.split('.')))[i] for i in sum_list[0][0][:3]]
     print(out)
-    """
+    
 
 
     # image captioning test
@@ -222,3 +234,4 @@ if __name__=="__main__":
     caption_module = ImgCapModule("/desktop/clipcap.pt", "cpu")
     captions = caption_module.forward(urls)
     print(captions)
+    """
