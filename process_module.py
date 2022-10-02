@@ -2,6 +2,7 @@ import requests
 import json
 import time
 
+from tqdm import tqdm
 import torch
 import torchvision
 import numpy as np
@@ -10,8 +11,7 @@ import Bertsum, image_captioning, Retrieval
 #날짜, 시간, api key
 class RetrievalModule:
     def __init__(self):
-        self.time = input()
-        f = open("/desktop/api_key")
+        f = open("/home/dhk1349/NBH/api_key")
         key = f.readline().replace("\n", "")
         self.api_key = key
         self.sum =[]
@@ -19,7 +19,7 @@ class RetrievalModule:
         
     def load(self, date, date2):
         self.issue = Retrieval.issue_ranking(date, self.api_key)
-        self.query = Retrieval.query_ranking(date, date2, self.api_key)
+        self.query = Retrieval.query_ranking(date, date2, self.api_key, 10)
 
     def remove(self):
         self.sum.clear()
@@ -57,8 +57,8 @@ class NewsSumModule:
         result = []
         self.load()
         trainer = Bertsum.build_trainer(self.args, 0, self.model, None)
-        for s in src:
-            processed_text = Bertsum.txt2input(realtext)
+        for s in tqdm(src):
+            processed_text = Bertsum.txt2input(s)
             test_iter = Bertsum.make_loader(self.args, processed_text, 'cpu')
 
             out = trainer.summ(test_iter, 10000)
@@ -88,21 +88,25 @@ class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수
         # 빅카인즈 url 붙여서 img추출해야함
         # self.hong = image_captioning.img_cap()
         caption_list = []
-        for url in urls:
-            img = image_captioning.get_img(url)
-            img = self.preprocess(img).unsqueeze(0).to(self.device)
-            # img = self.totensor(img)
-            with torch.no_grad():
-                # if type(model) is ClipCaptionE2E:
-                #     prefix_embed = model.forward_image(image)
-                # else:
-                prefix = self.clip_model.encode_image(img).to(self.device, dtype=torch.float32)
-                prefix_embed = self.model.clip_project(prefix).reshape(1, prefix_length, -1)
-            if use_beam_search:
-                generated_text_prefix = image_captioning.generate_beam(self.model, self.tokenizer, embed=prefix_embed)[0]
-            else:
-                generated_text_prefix = image_captioning.generate2(self.model, self.tokenizer, embed=prefix_embed)
-            caption_list.append(generated_text_prefix)
+        for url in tqdm(urls):
+            article_caption = []
+            for u in url:
+                img = image_captioning.get_img(u)
+                img = self.preprocess(img).unsqueeze(0)
+                img = img.to(self.device)
+                # img = self.totensor(img)
+                with torch.no_grad():
+                    # if type(model) is ClipCaptionE2E:
+                    #     prefix_embed = model.forward_image(image)
+                    # else:
+                    prefix = self.clip_model.encode_image(img).to(self.device, dtype=torch.float32)
+                    prefix_embed = self.model.clip_project(prefix).reshape(1, prefix_length, -1)
+                if use_beam_search:
+                    generated_text_prefix = image_captioning.generate_beam(self.model, self.tokenizer, embed=prefix_embed)[0]
+                else:
+                    generated_text_prefix = image_captioning.generate2(self.model, self.tokenizer, embed=prefix_embed)
+                article_caption.append(generated_text_prefix)
+            caption_list.append(article_caption)
         self.remove()
         return caption_list
 
@@ -110,8 +114,8 @@ class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수
 
 class UpdateModule:
     def __init__(self):
-        self.news_sum = NewsSumModule()
-        self.imgcap = ImgCapModule()
+        self.news_sum = NewsSumModule("/home/dhk1349/NBH/model_step_100000.pt")
+        self.imgcap = ImgCapModule("/home/dhk1349/NBH/clipcap.pt", "cpu")
         self.retrieval = RetrievalModule()
     
     def update_db(self):
@@ -120,10 +124,22 @@ class UpdateModule:
     def today(self):
         # interval in seconds
         retrieved = self.retrieval.forward('2022-09-30', '2022-10-01')
-        # self.news_sum.forward()
+        retrieved = retrieved[:5]
+        content_list = []
+        img_list = []
+        for r in retrieved:
+            content_list.append(r['content'])
+            img_list.append(r['images'].split('\n'))
 
-        # self.imgcap.forward()
-        return 
+        summ = self.news_sum.forward(content_list)
+        print(summ)
+        cap = self.imgcap.forward(img_list)
+        print(cap)
+        print(img_list)
+        for idx, r in enumerate(retrieved):
+            r['summ'] = summ[idx]
+            r["caption"] = cap[idx]
+        return retrieved 
         
 
 
