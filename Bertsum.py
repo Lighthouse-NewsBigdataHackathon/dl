@@ -473,6 +473,7 @@ args.gpu_ranks = [int(i) for i in args.gpu_ranks.split(',')]
 os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
 
 def txt2input(text):
+  # print(text)
   text = text.replace("\n", "")
   data = list(filter(None, text.split('. ')))
   for idx in range(len(data)):

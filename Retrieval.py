@@ -19,8 +19,8 @@ def issue_ranking(date,api_key):
     hong_issue = issue_json['return_object']['topics']
     newscluster_issue = []
     for i in range(len(hong_issue)):
-        for k in range(len(hong_issue[i]['news_cluster'])):
-            newscluster_issue.append(hong_issue[i]['news_cluster'][k])   #newscluster_issuelist 안에 newscode들 저장되어있음
+        # for k in range(len(hong_issue[i]['news_cluster'])):
+        newscluster_issue.append(hong_issue[i]['news_cluster'][0])   #newscluster_issuelist 안에 newscode들 저장되어있음
     return newscluster_issue
 
 # 7. query_rank api사용
