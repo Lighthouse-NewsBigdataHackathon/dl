@@ -8,7 +8,7 @@ import torch
 import torchvision
 import numpy as np
 import Bertsum, image_captioning, Retrieval, db
-
+import re
 import sys
 import os
 import pickle
@@ -34,6 +34,7 @@ class RetrievalModule:
     def forward(self, date, date2):
         self.load(date, date2)
         self.sum = self.issue + self.query
+        print(self.sum)
         news = Retrieval.news_info(self.api_key,self.sum)
         self.remove()
         return news
@@ -100,6 +101,9 @@ class ImgCapModule:
         for url in urls:
             article_caption = []
             for u in url:
+                if u=="":
+                    caption_list.append("None")
+                    continue
                 img = image_captioning.get_img(u)
                 img = self.preprocess(img).unsqueeze(0)
                 img = img.to(self.device)
@@ -135,6 +139,7 @@ class UpdateModule:
         retrieved = self.retrieval.forward('2022-09-30', '2022-10-01')
         # retrieved = retrieved[:5]
         print(f"{len(retrieved)} of news")
+        # print(retrieved)
         content_list = []
         img_list = []
         for r in retrieved:
@@ -158,13 +163,13 @@ if __name__=="__main__":
     print("Test Run")
     dl_server = UpdateModule()
     out = dl_server.today()
-    print(out)
+    # print(out)
     with open("../db_data.pickle", 'rb') as f:
         db_data = pickle.load(f)
     conn, cursor = db.connect_RDS(db_data["host"], db_data["port"], db_data["username"], db_data["password"], db_data["database"])
     for new_obj in out:
-        new_obj["summ"] = " ".join(new_obj["summ"])
-        new_obj["caption"] = " ".join(new_obj["caption"])
+        new_obj["summ"] = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ·!』\\‘|\(\)\[\]\<\>`\'…》]','', " ".join(new_obj["summ"]))
+        new_obj["caption"] = " ".join(new_obj["caption"]).replace("'", "")
         new_obj["published_at"] = new_obj["published_at"][:10]
         q = db.insert_news(new_obj["news_id"], new_obj["published_at"], new_obj["summ"], new_obj["caption"], issue_rank=0, keyword="None")
         print(q)

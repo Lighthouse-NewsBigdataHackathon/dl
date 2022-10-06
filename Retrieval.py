@@ -97,7 +97,7 @@ def query_ranking(date1,date2,api_key,offset):
     hong_popularnews = (popularnews['return_object']['documents'])
     text_popularnews = []
     for i in range(len(hong_popularnews)):
-        text_popularnews.append(hong_popularnews[0]['news_id'])
+        text_popularnews.append(hong_popularnews[i]['news_id'])
     print(len(text_popularnews))
     return text_popularnews
 
