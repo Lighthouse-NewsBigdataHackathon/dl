@@ -168,10 +168,11 @@ if __name__=="__main__":
         db_data = pickle.load(f)
     conn, cursor = db.connect_RDS(db_data["host"], db_data["port"], db_data["username"], db_data["password"], db_data["database"])
     for new_obj in out:
-        new_obj["summ"] = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ·!』\\‘|\(\)\[\]\<\>`\'…》]','', " ".join(new_obj["summ"]))
+        new_obj['title'] = new_obj['title'].replace("\'", "")
+        new_obj["summ"] = re.sub('[-=+,#/\?:^$@*\"※~&%ㆍ·!』\\‘|\(\)\[\]\<\>`\'…》]','', " ".join(new_obj["summ"])).replace(".", ". ")
         new_obj["caption"] = " ".join(new_obj["caption"]).replace("'", "")
         new_obj["published_at"] = new_obj["published_at"][:10]
-        q = db.insert_news(new_obj["news_id"], new_obj["published_at"], new_obj["summ"], new_obj["caption"], issue_rank=0, keyword="None")
+        q = db.insert_news(new_obj["title"], new_obj["news_id"], new_obj["published_at"], new_obj["summ"], new_obj["caption"], issue_rank=0, keyword="None")
         print(q)
         cursor.execute(q)
         conn.commit()

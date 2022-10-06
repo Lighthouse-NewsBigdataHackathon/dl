@@ -112,6 +112,7 @@ def news_info(api_key,news_id):
         "argument": {
             "news_ids": news_id,
             "fields": [
+                "title",
                 "content",
                 "byline",
                 "category",
@@ -130,7 +131,7 @@ def news_info(api_key,news_id):
     meta_container=[]
     text_issuenews=[]
     image_issuenews=[]
-    keys = ['news_id','content','published_at', 'provider', 'images','category']
+    keys = ['news_id','content','published_at', 'provider', 'images', 'category', 'title']
     for i in range(len(hong_documents)):
         meta_dict = {}
         for k in range(len(keys)):
