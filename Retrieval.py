@@ -21,6 +21,7 @@ def issue_ranking(date,api_key):
     for i in range(len(hong_issue)):
         # for k in range(len(hong_issue[i]['news_cluster'])):
         newscluster_issue.append(hong_issue[i]['news_cluster'][0])   #newscluster_issuelist 안에 newscode들 저장되어있음
+    print(len(newscluster_issue))
     return newscluster_issue
 
 # 7. query_rank api사용
@@ -97,6 +98,7 @@ def query_ranking(date1,date2,api_key,offset):
     text_popularnews = []
     for i in range(len(hong_popularnews)):
         text_popularnews.append(hong_popularnews[0]['news_id'])
+    print(len(text_popularnews))
     return text_popularnews
 
 #newscluster_issue list안에는 issue_ranking(4)에서 뽑은 news_id들이,

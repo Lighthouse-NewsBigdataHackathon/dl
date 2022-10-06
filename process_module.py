@@ -160,10 +160,14 @@ if __name__=="__main__":
     out = dl_server.today()
     print(out)
     with open("../db_data.pickle", 'rb') as f:
-        db = pickle.load(f)
-    conn, cursor = db.connect_RDS(db["host"], db["port"], db["username"], db["password"], db["database"])
+        db_data = pickle.load(f)
+    conn, cursor = db.connect_RDS(db_data["host"], db_data["port"], db_data["username"], db_data["password"], db_data["database"])
     for new_obj in out:
-        q = insert_news(new_obj["news_id"], new_obj["published_at"], new_obj["summ"], new_obj["caption"], issue_rank=0, keyword="None")
+        new_obj["summ"] = " ".join(new_obj["summ"])
+        new_obj["caption"] = " ".join(new_obj["caption"])
+        new_obj["published_at"] = new_obj["published_at"][:10]
+        q = db.insert_news(new_obj["news_id"], new_obj["published_at"], new_obj["summ"], new_obj["caption"], issue_rank=0, keyword="None")
+        print(q)
         cursor.execute(q)
         conn.commit()
     cursor.close()
