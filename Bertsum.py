@@ -284,16 +284,15 @@ class BertData():
 
         if (len(src) == 0):
             return None
-
         original_src_txt = [' '.join(s) for s in src]
         idxs = [i for i, s in enumerate(src) if (len(s) > 1)]
 
         src = [src[i][:2000] for i in idxs]
         src = src[:1000]
-
+        """
         if (len(src) < 3):
             return None
-
+        """
         src_txt = [' '.join(sent) for sent in src]
         text = ' [SEP] [CLS] '.join(src_txt)
         src_subtokens = self.tokenizer.tokenize(text)
@@ -474,9 +473,15 @@ args.gpu_ranks = [int(i) for i in args.gpu_ranks.split(',')]
 os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_gpus
 
 def txt2input(text):
-  data = list(filter(None, text.split('.')))
+  text = text.replace("\n", "")
+  data = list(filter(None, text.split('. ')))
+  for idx in range(len(data)):
+    data[idx]+='.'
+  if '@' in data[-1]:
+    data=data[:-1]
   bertdata = BertData()   
   txt_data = bertdata.preprocess(data)
+  # print(f"{data}\n{txt_data}\n============")
   data_dict = {"src":txt_data[0],
                "labels":[0,1,2],
                "segs":txt_data[2],

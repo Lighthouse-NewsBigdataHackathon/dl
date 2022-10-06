@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 import json
 import time
@@ -8,7 +9,6 @@ import torchvision
 import numpy as np
 import Bertsum, image_captioning, Retrieval
 
-#날짜, 시간, api key
 class RetrievalModule:
     def __init__(self):
         f = open("/home/dhk1349/NBH/api_key")
@@ -30,9 +30,6 @@ class RetrievalModule:
         news = Retrieval.news_info(self.api_key,self.sum)
         self.remove()
         return news
-        #이중 리스트 형태. 리스트 안에 기사와 이미지가 각각 리스트 형태로 존재.
-
-        
 
 
 class NewsSumModule:
@@ -51,23 +48,28 @@ class NewsSumModule:
         del self.model
 
     def forward(self, src):
-        """
-        scr: realtext를 list에 담아서 넣는다.
-        """
         result = []
         self.load()
         trainer = Bertsum.build_trainer(self.args, 0, self.model, None)
         for s in tqdm(src):
+            s = s.replace("\n", "")
+            s = s.split(". ")
+            if '@' in  s[-1]:
+                s = '. '.join(s[:-1])
             processed_text = Bertsum.txt2input(s)
+            # print(f"process_text: {processed_text}")
             test_iter = Bertsum.make_loader(self.args, processed_text, 'cpu')
-
             out = trainer.summ(test_iter, 10000)
-            out = [list(filter(None, s.split('.')))[i] for i in out[0][:3]]
+            # out = out.replace("\n", "")
+            out = [list(filter(None, s.split('. ')))[i] for i in out[0][:3]]
+            for idx in range(len(out)):
+                out[idx] = out[idx].replace("\n", "")
+                out[idx]+='.'
             result.append(out)
         self.remove()
         return result
     
-class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수행.
+class ImgCapModule: 
     def __init__(self, path, device="cpu"):
         self.device = device
         self.path = path
@@ -85,10 +87,8 @@ class ImgCapModule: #api에서 이미지를 받아와서, 이미지캡셔닝 수
         prefix_length = 10
         
         self.model, self.clip_model, self.preprocess, self.tokenizer = self.load()
-        # 빅카인즈 url 붙여서 img추출해야함
-        # self.hong = image_captioning.img_cap()
         caption_list = []
-        for url in tqdm(urls):
+        for url in urls:
             article_caption = []
             for u in url:
                 img = image_captioning.get_img(u)
@@ -132,10 +132,10 @@ class UpdateModule:
             img_list.append(r['images'].split('\n'))
 
         summ = self.news_sum.forward(content_list)
-        print(summ)
+        # print(summ)
         cap = self.imgcap.forward(img_list)
-        print(cap)
-        print(img_list)
+        # print(cap)
+        # print(img_list)
         for idx, r in enumerate(retrieved):
             r['summ'] = summ[idx]
             r["caption"] = cap[idx]
@@ -147,7 +147,8 @@ class UpdateModule:
 if __name__=="__main__":
     print("Test Run")
     dl_server = UpdateModule()
-    dl_server.today()
+    out = dl_server.today()
+    print(out)
     """
     print(torch.cuda.device_count())
     news_sum = NewsSumModule("/desktop/model_step_100000.pt")

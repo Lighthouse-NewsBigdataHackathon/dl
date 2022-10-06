@@ -9,7 +9,7 @@ def issue_ranking(date,api_key):
     payload_issue = {"access_key":api_key, #api key 넣는곳
         "argument": {
             "date": date,
-                "provider": [#"국민일보"
+                "provider": [
                 ]
             }
         }
@@ -55,20 +55,13 @@ def query_ranking(date1,date2,api_key,offset):
                 "until": date2
             },
             "provider": [
-                # "경향신문",
             ],
             "category": [
-                # "정치>정치일반",
-                # "IT_과학"
             ],
             "category_incident": [
-                # "범죄",
-                # "교통사고",
-                # "재해>자연재해"
             ],
             "byline": "",
             "provider_subject": [
-                # "경제","부동산"
             ],
             "subject_info": [
                 ""
@@ -139,6 +132,9 @@ def news_info(api_key,news_id):
     for i in range(len(hong_documents)):
         meta_dict = {}
         for k in range(len(keys)):
-            meta_dict[keys[k]] = (hong_documents[i][keys[k]])
+            if keys[k]=="content":
+                meta_dict[keys[k]] = (hong_documents[i][keys[k]].replace("\n", ""))
+            else:
+                meta_dict[keys[k]] = (hong_documents[i][keys[k]])
         meta_container.append(meta_dict)
     return meta_container
