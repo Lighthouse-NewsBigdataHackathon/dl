@@ -172,7 +172,7 @@ if __name__=="__main__":
         new_obj["summ"] = re.sub('[-=+,#/\?:^$@*\"※~&%ㆍ·!』\\‘|\(\)\[\]\<\>`\'…》]','', " ".join(new_obj["summ"])).replace(".", ". ")
         new_obj["caption"] = " ".join(new_obj["caption"]).replace("'", "")
         new_obj["published_at"] = new_obj["published_at"][:10]
-        q = db.insert_news(new_obj["title"], new_obj["news_id"], new_obj["published_at"], new_obj["summ"], new_obj["caption"], issue_rank=0, keyword="None")
+        q = db.insert_news(new_obj["title"], new_obj["news_id"], new_obj["published_at"], new_obj["summ"], new_obj["images"], new_obj["caption"], issue_rank=0, keyword="None")
         print(q)
         cursor.execute(q)
         conn.commit()
